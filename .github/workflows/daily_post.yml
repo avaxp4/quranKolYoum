@@ -1,0 +1,38 @@
+name: Daily Quran Post
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install libraries
+        run: pip install -r requirements.txt
+
+      - name: Run Script
+        env:
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_ACCESS_TOKEN: ${{ secrets.FACEBOOK_ACCESS_TOKEN }}
+        run: python quran_kol_youm.py
+
+      - name: Save progress (Commit changes)
+        run: |
+          git config --global user.name "QuranBot"
+          git config --global user.email "bot@github.com"
+          git add posted_pages.json
+          git add app.log
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update posted pages" && git push)
